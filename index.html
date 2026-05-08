@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이상(李箱) — 4차원 시공간의 설계자</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;700&family=Noto+Sans+KR:wght@300;400&family=Courier+Prime&family=Libre+Baskerville:ital@1&display=swap');
+
+  :root {
+    --bg: #080808;
+    --surface: #0f0f0f;
+    --border: #222;
+    --accent: #c8a96e;
+    --accent2: #6e9ec8;
+    --text: #e8e4dc;
+    --muted: #666;
+    --poem: #f0ead8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+    line-height: 1.8;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.2rem 3rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,8,8,0.92);
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo { font-family: 'Noto Serif KR', serif; font-size: 1rem; color: var(--accent); letter-spacing: 0.15em; }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.3s; }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; position: relative; padding: 6rem 2rem 4rem;
+  }
+  #hero-canvas { position: absolute; inset: 0; opacity: 0.35; }
+  .hero-content { position: relative; z-index: 2; }
+  .hero-label { font-size: 0.72rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--accent); margin-bottom: 2rem; opacity: 0; animation: fadeUp 1s 0.3s forwards; }
+  .hero-title { font-family: 'Noto Serif KR', serif; font-size: clamp(3rem,8vw,7rem); font-weight: 700; line-height: 1.05; color: var(--poem); margin-bottom: 1rem; opacity: 0; animation: fadeUp 1s 0.6s forwards; }
+  .hero-sub { font-size: clamp(0.9rem,2vw,1.1rem); color: var(--muted); letter-spacing: 0.08em; margin-bottom: 3rem; opacity: 0; animation: fadeUp 1s 0.9s forwards; }
+  .hero-quote { font-family: 'Libre Baskerville', serif; font-style: italic; font-size: 0.92rem; color: var(--accent2); max-width: 520px; border-left: 2px solid var(--accent2); padding-left: 1.2rem; text-align: left; opacity: 0; animation: fadeUp 1s 1.2s forwards; }
+  .scroll-hint { position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.5rem; opacity: 0; animation: fadeUp 1s 1.8s forwards; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.2em; }
+  .scroll-line { width: 1px; height: 40px; background: linear-gradient(to bottom, var(--muted), transparent); animation: scrollPulse 2s infinite; }
+
+  /* 공통 */
+  section { max-width: 960px; margin: 0 auto; padding: 7rem 2rem; }
+  .section-label { font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.2rem; }
+  .section-title { font-family: 'Noto Serif KR', serif; font-size: clamp(1.8rem,4vw,2.6rem); font-weight: 700; color: var(--poem); line-height: 1.25; margin-bottom: 2rem; }
+  .body-text { font-size: 0.97rem; color: #aaa; line-height: 2; margin-bottom: 1.5rem; max-width: 700px; }
+  .divider { width: 100%; height: 1px; background: var(--border); }
+
+  /* 시 원문 */
+  .poem-container { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+  .poem-box { background: var(--surface); border: 1px solid var(--border); padding: 2.5rem; }
+  .poem-title-sm { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 1.5rem; }
+  .poem-text { font-family: 'Noto Serif KR', serif; font-size: 0.88rem; line-height: 2.6; color: var(--poem); white-space: pre-line; }
+  .keyword { cursor: pointer; border-bottom: 1px solid var(--accent); color: var(--accent); transition: background 0.2s; }
+  .keyword:hover { background: rgba(200,169,110,0.12); }
+
+  /* 툴팁 */
+  .tooltip { display: none; position: fixed; z-index: 300; background: #111; border: 1px solid var(--accent); padding: 1rem 1.2rem; max-width: 280px; font-size: 0.82rem; color: var(--text); line-height: 1.75; pointer-events: none; box-shadow: 0 8px 32px rgba(0,0,0,0.7); }
+  .tooltip.show { display: block; }
+  .tooltip-title { font-family: 'Noto Serif KR', serif; color: var(--accent); margin-bottom: 0.4rem; font-size: 0.9rem; }
+
+  /* 시각화 */
+  .viz-section { background: var(--surface); border: 1px solid var(--border); padding: 2rem 2.5rem 2.5rem; margin-top: 2rem; }
+  .viz-title { font-family: 'Noto Serif KR', serif; font-size: 1.05rem; color: var(--poem); margin-bottom: 0.4rem; }
+  .viz-desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.4rem; line-height: 1.85; }
+  canvas.viz-canvas { display: block; width: 100%; background: #050505; border: 1px solid var(--border); }
+  .btn-row { display: flex; gap: 0.8rem; margin-top: 1.2rem; flex-wrap: wrap; }
+  .btn { padding: 0.5rem 1.2rem; background: transparent; border: 1px solid var(--border); color: var(--muted); font-family: 'Noto Sans KR', sans-serif; font-size: 0.78rem; letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s; }
+  .btn:hover, .btn.active { border-color: var(--accent); color: var(--accent); background: rgba(200,169,110,0.07); }
+
+  /* 슬라이더 */
+  input[type=range] { -webkit-appearance: none; width: 100%; height: 2px; background: var(--border); outline: none; margin: 1rem 0 0.3rem; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+  .slider-label { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); font-family: 'Courier Prime', monospace; }
+
+  /* 결론 */
+  .conclusion-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem; margin-top: 2.5rem; }
+  .c-card { border: 1px solid var(--border); padding: 1.8rem; transition: border-color 0.3s; }
+  .c-card:hover { border-color: var(--accent); }
+  .c-num { font-family: 'Courier Prime', monospace; font-size: 2rem; color: var(--border); margin-bottom: 0.8rem; display: block; }
+  .c-title { font-family: 'Noto Serif KR', serif; font-size: 1rem; color: var(--poem); margin-bottom: 0.5rem; }
+  .c-body { font-size: 0.82rem; color: var(--muted); line-height: 1.85; }
+
+  footer { border-top: 1px solid var(--border); padding: 2rem 3rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.74rem; color: var(--muted); }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes scrollPulse { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+
+  @media (max-width:700px) {
+    .poem-container { grid-template-columns:1fr; }
+    .conclusion-grid { grid-template-columns:1fr; }
+    nav { padding:1rem 1.5rem; }
+    .nav-links { gap:1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">李箱 / Yi-Sang</div>
+  <ul class="nav-links">
+    <li><a href="#poem-section">시 읽기</a></li>
+    <li><a href="#viz1">사각형</a></li>
+    <li><a href="#viz2">스펙트럼</a></li>
+    <li><a href="#viz3">4차원</a></li>
+    <li><a href="#conclusion">결론</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero" style="max-width:100%;padding:0;">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <p class="hero-label">이상(李箱) 1910 — 1937 &nbsp;|&nbsp; 4차원 시공간의 설계자</p>
+    <h1 class="hero-title">삼차각설계도<br>건축무한육면각체</h1>
+    <p class="hero-sub">三次角設計圖 &nbsp;·&nbsp; 建築無限六面角體</p>
+    <p class="hero-quote">
+      "예컨대빛은매초당300,000킬로미터날아가는것이확실하다면<br>
+      사람의발명은매초당600,000킬로미터달아날수없다는법은물론없다"<br>
+      <span style="font-size:0.78rem;color:#888;font-style:normal;">— 삼차각설계도 각서 1, 1931</span>
+    </p>
+  </div>
+  <div class="scroll-hint"><span>scroll</span><div class="scroll-line"></div></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 시 원문 인터랙션 -->
+<section id="poem-section">
+  <p class="section-label">Reading — 01</p>
+  <h2 class="section-title">시를 읽다<br><span style="font-size:0.55em;color:var(--muted);font-weight:300;letter-spacing:0.04em;">밑줄 친 단어에 마우스를 올려보세요</span></h2>
+  <p class="body-text">이상의 시어 하나하나는 단순한 비유가 아니다. 각 키워드 위에 마우스를 올리면 그 배후의 물리학·기하학적 원관념이 드러난다.</p>
+
+  <div class="poem-container">
+    <div class="poem-box">
+      <div class="poem-title-sm">삼차각설계도 — 각서 1 (1931)</div>
+      <div class="poem-text"><span class="keyword" data-key="spectrum">스펙트럼</span>
+축X　축Y　<span class="keyword" data-key="axisz">축Z</span>
+
+<span class="keyword" data-key="dimension3">입체</span>에의절망에의한탄생
+<span class="keyword" data-key="dimension4">운동</span>에의절망에의한탄생
+
+우주는<span class="keyword" data-key="power">멱</span>에의하는멱에의한다
+
+예컨대빛은매초당300,000킬로미터
+날아가는것이확실하다면
+사람의발명은매초당600,000킬로미터
+달아날수없다는법은물론없다
+
+사람은<span class="keyword" data-key="light">빛</span>보다빠르게달아나면
+사람은빛을보는가
+
+<span class="keyword" data-key="euclid">유우크리트</span>는사망해버린오늘</div>
+    </div>
+
+    <div class="poem-box">
+      <div class="poem-title-sm">건축무한육면각체 — AU MAGASIN DE NOUVEAUTES (1932)</div>
+      <div class="poem-text"><span class="keyword" data-key="square">사각</span>의중의사각의중의
+사각의중의<span class="keyword" data-key="square4d">사각　의중의　사각</span>.
+
+사각인원운동의사각인원운동
+의　사각　인　원.
+
+석감이통과하는혈관의
+석감의향내를투시하는사람.
+
+지구를본떠만든지구의를
+본떠만든지구.
+
+<span class="keyword" data-key="hexangle">평행사변형</span>대각선방향을
+추진하는막대한중량.
+
+위에서내려오고밑에서올라가고
+위에서내려오고밑에서올라간사람은
+밑에서올라가지아니한
+위에서내려오지아니한사람.</div>
+    </div>
+  </div>
+</section>
+
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-title" id="tt-title"></div>
+  <div id="tt-body"></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 시각화 1: 사각형 중심 결합 -->
+<section id="viz1">
+  <p class="section-label">Visualization — 02</p>
+  <h2 class="section-title">"사각의중의사각"<br>— 차원 상승의 구조</h2>
+  <p class="body-text">「AU MAGASIN DE NOUVEAUTES」의 첫 구절은 단순한 중첩이 아니다. 사각형 정중앙에 새 사각형을 직각으로 결합할 때마다 공간의 차원이 높아진다. 버튼을 눌러 이상이 시 속에 숨긴 차원 확장 과정을 확인해보라.</p>
+  <div class="viz-section">
+    <div class="viz-title">사각형 중심 결합과 차원 상승</div>
+    <div class="viz-desc" id="square-desc">현재: 1개의 사각형 — 2차원 평면</div>
+    <canvas class="viz-canvas" id="square-canvas" height="340"></canvas>
+    <div class="btn-row">
+      <button class="btn active" onclick="setSquareStep(1)">① 1개 — 2D</button>
+      <button class="btn" onclick="setSquareStep(2)">② 2개 — 3D 진입</button>
+      <button class="btn" onclick="setSquareStep(3)">③ 3개 — 3D 완성</button>
+      <button class="btn" onclick="setSquareStep(4)">④ 4개 — 4D 진입 ✦</button>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 시각화 2: 스펙트럼 -->
+<section id="viz2">
+  <p class="section-label">Visualization — 03</p>
+  <h2 class="section-title">"스펙트럼" — 빛으로 차원을 열다</h2>
+  <p class="body-text">「각서 1」의 도식은 다양한 색의 빛나는 점들로 이루어진 2차원 격자다. 분광기가 빛을 파장별로 분해하듯, 각 점의 스펙트럼을 새로운 Z축으로 펼치면 2차원 격자가 3차원 공간으로 확장된다. 이것이 이상의 '차원 확장 장치'다.</p>
+  <div class="viz-section">
+    <div class="viz-title">각서 1의 도식 — 스펙트럼을 통한 2D → 3D 확장</div>
+    <div class="viz-desc">슬라이더를 움직여 빛의 스펙트럼이 Z축으로 펼쳐지는 과정을 보라. (자동 재생 중)</div>
+    <canvas class="viz-canvas" id="spectrum-canvas" height="280"></canvas>
+    <div class="slider-label"><span>2D 격자 (스펙트럼 숨김)</span><span>3D 확장 (스펙트럼 전개)</span></div>
+    <input type="range" id="spectrum-slider" min="0" max="100" value="0">
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 시각화 3: Tesseract -->
+<section id="viz3">
+  <p class="section-label">Visualization — 04</p>
+  <h2 class="section-title">4차원 초입방체<br>— 무한육면각체의 그림자</h2>
+  <p class="body-text">4차원 도형은 직접 볼 수 없다. 3차원 정육면체가 2차원 종이에 투영될 때 형태가 뒤틀리듯, 4차원 초입방체(tesseract)를 3차원으로 투영하면 이상하고 아름다운 형태가 나타난다. 이것이 이상이 설계한 '무한육면각체'의 그림자다. 각 꼭짓점에서 6개의 면이 만나는 구조가 바로 '육면각(六面角)'이다.</p>
+  <div class="viz-section">
+    <div class="viz-title">Tesseract — 4차원 초입방체의 3D 투영 (실시간 회전)</div>
+    <div class="viz-desc">
+      <span style="color:var(--accent2)">■</span> 3D 엣지 &nbsp;&nbsp;
+      <span style="color:#c86e9e">■</span> W축 엣지 (4번째 차원) &nbsp;&nbsp;
+      <span style="color:var(--accent)">●</span> 꼭짓점 — 각 꼭짓점에 6개의 면이 만남 = 육면각
+    </div>
+    <canvas class="viz-canvas" id="tesseract-canvas" height="380"></canvas>
+    <div class="btn-row">
+      <button class="btn active" id="tess-play-btn" onclick="toggleTesseract()">⏸ 일시정지</button>
+      <button class="btn" onclick="setTessSpeed(0.3)">느리게</button>
+      <button class="btn" onclick="setTessSpeed(0.8)">보통</button>
+      <button class="btn" onclick="setTessSpeed(1.8)">빠르게</button>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 결론 -->
+<section id="conclusion">
+  <p class="section-label">Conclusion — 05</p>
+  <h2 class="section-title">이상이 남긴 것</h2>
+  <p class="body-text">이상은 1930년대에 이미 문학·수학·물리학의 융합을 실천했다. 그의 시어는 문학적 언어인 동시에 수학적 개념이었고, 시의 형식 자체가 4차원을 향한 실험이었다. 예술적 감수성과 과학적 소양을 하나로 녹인 이상의 실험은 지금 더욱 유효하다.</p>
+  <div class="conclusion-grid">
+    <div class="c-card"><span class="c-num">01</span><div class="c-title">삼차각 = 4차원 각도</div><div class="c-body">초구면좌표계에서 방향을 기술하는 세 각도값 (ψ, φ, θ). 이상이 직접 만든 조어.</div></div>
+    <div class="c-card"><span class="c-num">02</span><div class="c-title">육면각 = 4D 꼭짓점</div><div class="c-body">4차원의 가장 단순한 도형에서 한 꼭짓점에 만나는 6개의 면이 이루는 초입체각.</div></div>
+    <div class="c-card"><span class="c-num">03</span><div class="c-title">무한육면각체 = 시간 속 궤적</div><div class="c-body">4차원 시공간 위의 임의의 도형. 시간에 따라 변화하는 3차원 물체의 전체 이야기.</div></div>
+    <div class="c-card"><span class="c-num">04</span><div class="c-title">스펙트럼 = 차원 확장 장치</div><div class="c-body">각서 1의 도식에서 빛의 분광이 Z축을 생성, 2D → 3D 확장을 구현하는 시적 기법.</div></div>
+    <div class="c-card"><span class="c-num">05</span><div class="c-title">사각형 중심 결합 = 또 다른 장치</div><div class="c-body">"사각의중의사각..." 구절이 직각 결합을 반복하며 2D→3D→4D를 달성하는 구조.</div></div>
+    <div class="c-card"><span class="c-num">06</span><div class="c-title">이상 = 융합의 원형</div><div class="c-body">과학적 소양과 예술적 감수성을 하나로 녹인 이상의 실험은 지금 더욱 유효하다.</div></div>
+  </div>
+</section>
+
+<footer>
+  <span>이상(李箱) 4차원 시공간 해석</span>
+  <span>참고: 오상현·이수정, 「이상 시의 4차원 시공간 설계 및 건축」, 2021</span>
+</footer>
+
+<script>
+/* ── HERO CANVAS ── */
+(function(){
+  const cv=document.getElementById('hero-canvas'),ctx=cv.getContext('2d');
+  let W,H,t=0;
+  function resize(){W=cv.width=cv.offsetWidth;H=cv.height=cv.offsetHeight;}
+  resize(); window.addEventListener('resize',resize);
+  function ax(cx,cy,len,ang,col,lbl){
+    ctx.strokeStyle=col;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ang)*len,cy+Math.sin(ang)*len);ctx.stroke();
+    ctx.fillStyle=col;ctx.font='12px Courier Prime,monospace';
+    ctx.fillText(lbl,cx+Math.cos(ang)*len+5,cy+Math.sin(ang)*len+4);
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H); t+=0.006;
+    [{x:W*.15,y:H*.28},{x:W*.5,y:H*.55},{x:W*.82,y:H*.22},{x:W*.28,y:H*.72},{x:W*.74,y:H*.68}]
+    .forEach((c,i)=>{
+      const p=t+i*1.3,r=Math.min(W,H)*.08,a=.35+.18*Math.sin(t*.7+i);
+      ctx.globalAlpha=a;
+      ax(c.x,c.y,r,p,'#c8a96e','x'); ax(c.x,c.y,r,p+Math.PI*2/3,'#6e9ec8','y'); ax(c.x,c.y,r,p+Math.PI*4/3,'#8ec86e','z');
+      ctx.globalAlpha=a*.4;ctx.setLineDash([4,4]);
+      ax(c.x,c.y,r*.65,p+Math.PI/2,'#c86e9e','w');
+      ctx.setLineDash([]);ctx.globalAlpha=1;
+      ctx.fillStyle='#333';ctx.beginPath();ctx.arc(c.x,c.y,2,0,Math.PI*2);ctx.fill();
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ── TOOLTIP ── */
+const TD={
+  spectrum:  {t:'스펙트럼 (spectrum)',b:'빛을 파장별로 분해한 분포. 분광기가 한 점(0차원)에서 나온 빛을 1차원 스펙트럼으로 펼치듯, 이상은 스펙트럼을 Z축으로 삼아 2D→3D 차원 확장을 구현했다.'},
+  axisz:     {t:'축Z — 세 번째 차원',b:'X·Y 격자에 Z축이 추가되는 순간 2차원 평면이 3차원 공간이 된다. 이상은 스펙트럼을 Z축으로 활용하는 독창적 방법으로 이 확장을 시에 담아냈다.'},
+  dimension3:{t:'입체 — 3차원',b:'"입체에의절망에의한탄생": 2차원 종이로 3차원 물체를 표현하려는 절망. 그러나 투상도법이라는 도구가 탄생해 극복된다. 차원 확장의 좌절과 극복의 반복.'},
+  dimension4:{t:'운동 — 4차원 시공간',b:'"운동에의절망에의한탄생": 3차원 물체의 운동은 시간이 관여하는 4차원 시공간 위에서 일어난다. 3D로 4D를 담으려는 절망, 그리고 새로운 도구의 탄생.'},
+  power:     {t:'멱 (冪) — 거듭제곱',b:'실수 집합 ℝ을 제곱하면 2차원 평면 ℝ², 다시 제곱하면 4차원 공간 ℝ⁴. "우주는멱에의하는멱에의한다" = 우주는 ℝ→ℝ²→ℝ⁴로 차원이 확장된다.'},
+  light:     {t:'빛 — 광속 불변의 원리',b:'특수상대론: 어떤 관찰자에게도 빛의 속도는 일정(약 30만 km/s). 빛보다 빠르게 이동하면 시간이 역행된다는 착상으로 이어진다.'},
+  euclid:    {t:'유우크리트 (유클리드)',b:'"유클리드는 사망해버린 오늘": 유클리드 기하학은 절대공간·뉴턴 역학을 기술하지만 상대론적 시공간에는 적용되지 않는다. 1931년은 상대론이 정설로 자리잡은 시기였다.'},
+  square:    {t:'사각 (四角) — 차원 확장의 씨앗',b:'사각형 정중앙에 새 사각형을 직각으로 결합할수록 공간의 차원이 높아진다. 2개 결합→3D, 4개 결합→4D. 이것이 "사각형 중심 결합"이다.'},
+  square4d:  {t:'"사각　의중의　사각" — 4차원 선언',b:'앞의 "사각의중의사각"과 달리 의도적인 띄어쓰기가 있다. 마지막 "의중의"의 의미가 다름을 표시한 것으로, 이 사각형은 4차원 공간 위에 존재한다.'},
+  hexangle:  {t:'평행사변형 — 육면각의 그림자',b:'4차원에서 가장 단순한 도형(꼭짓점 5개)의 각 꼭짓점에는 6개의 면이 만난다. 이것이 "육면각(六面角)". 평행사변형은 그 4차원 구조가 2D에 투영된 그림자다.'}
+};
+const tip=document.getElementById('tooltip'),ttT=document.getElementById('tt-title'),ttB=document.getElementById('tt-body');
+document.querySelectorAll('.keyword').forEach(el=>{
+  el.addEventListener('mouseenter',e=>{const d=TD[el.dataset.key];if(!d)return;ttT.textContent=d.t;ttB.textContent=d.b;tip.classList.add('show');mv(e);});
+  el.addEventListener('mousemove',mv);
+  el.addEventListener('mouseleave',()=>tip.classList.remove('show'));
+});
+function mv(e){let x=e.clientX+16,y=e.clientY+16;if(x+290>window.innerWidth)x=e.clientX-296;if(y+170>window.innerHeight)y=e.clientY-170;tip.style.left=x+'px';tip.style.top=y+'px';}
+
+/* ── 사각형 중심 결합 ── */
+(function(){
+  const cv=document.getElementById('square-canvas'),ctx=cv.getContext('2d');
+  let W,H;
+  const descs=['','1개의 사각형 — 2차원 평면 위에 놓인 단일 도형','2개 결합: 2차원 → 3차원 진입. XY평면 + XZ평면이 직각으로 만난다.','3개 결합: 3차원 완성. XY + XZ + YZ 평면. 건축 정투상도의 기준면과 동일.','4개 결합: 3차원 → 4차원 진입! 4번째 축(W)이 필요해진다 — 이것이 "사각　의중의　사각"'];
+  const C=['#c8a96e','#6e9ec8','#8ec86e','#c86e9e'];
+  function resize(){W=cv.width=cv.offsetWidth;H=cv.height=340;}
+  resize();window.addEventListener('resize',()=>{resize();draw(1);});
+
+  window.setSquareStep=function(s){
+    document.getElementById('square-desc').textContent=descs[s];
+    document.querySelectorAll('#viz1 .btn').forEach((b,i)=>b.classList.toggle('active',i===s-1));
+    draw(s);
+  };
+
+  function draw(step=1){
+    ctx.clearRect(0,0,W,H);
+    const cx=W/2,cy=H/2,sz=Math.min(W,H)*.22,sk=sz*.52;
+
+    // 사각형 1 — XY
+    ctx.strokeStyle=C[0];ctx.lineWidth=1.8;ctx.setLineDash([]);
+    ctx.strokeRect(cx-sz,cy-sz,sz*2,sz*2);
+
+    if(step>=2){
+      // 사각형 2 — XZ (위 덮개)
+      ctx.strokeStyle=C[1];ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx-sz,cy-sz);ctx.lineTo(cx-sz+sk,cy-sz-sz*.55);
+      ctx.lineTo(cx+sz+sk,cy-sz-sz*.55);ctx.lineTo(cx+sz,cy-sz);ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx-sz,cy+sz);ctx.lineTo(cx-sz+sk,cy+sz-sz*.55);
+      ctx.lineTo(cx+sz+sk,cy+sz-sz*.55);ctx.lineTo(cx+sz,cy+sz);ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx-sz+sk,cy-sz-sz*.55);ctx.lineTo(cx-sz+sk,cy+sz-sz*.55);ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx+sz+sk,cy-sz-sz*.55);ctx.lineTo(cx+sz+sk,cy+sz-sz*.55);ctx.stroke();
+    }
+
+    if(step>=3){
+      // 사각형 3 — YZ (측면)
+      ctx.strokeStyle=C[2];ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx+sz,cy-sz);ctx.lineTo(cx+sz+sk,cy-sz-sz*.55);
+      ctx.lineTo(cx+sz+sk,cy+sz-sz*.55);ctx.lineTo(cx+sz,cy+sz);ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx-sz,cy-sz);ctx.lineTo(cx-sz+sk,cy-sz-sz*.55);
+      ctx.lineTo(cx-sz+sk,cy+sz-sz*.55);ctx.lineTo(cx-sz,cy+sz);ctx.stroke();
+    }
+
+    if(step>=4){
+      const d=sz*.42;
+      ctx.strokeStyle=C[3];ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+      ctx.strokeRect(cx-sz*.5+d,cy-sz*.5-d,sz,sz);
+      ctx.setLineDash([]);ctx.lineWidth=.7;ctx.setLineDash([3,5]);
+      [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sy])=>{
+        ctx.beginPath();ctx.moveTo(cx+sx*sz,cy+sy*sz);ctx.lineTo(cx+sx*sz*.5+d,cy+sy*sz*.5-d);ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      ctx.fillStyle=C[3];ctx.font='12px Courier Prime,monospace';
+      ctx.fillText('w',cx+d+sz*.5+6,cy-d-sz*.5-4);
+      ctx.fillStyle='rgba(200,110,158,0.04)';ctx.fillRect(0,0,W,H);
+    }
+
+    ctx.font='11px Courier Prime,monospace';
+    ctx.fillStyle=C[0];ctx.fillText('x',cx+sz+8,cy+4);ctx.fillText('y',cx+3,cy-sz-8);
+    if(step>=2){ctx.fillStyle=C[1];ctx.fillText('z',cx+sk+sz+6,cy-sz*.55-sz-4);}
+  }
+  draw(1);
+})();
+
+/* ── 스펙트럼 ── */
+(function(){
+  const cv=document.getElementById('spectrum-canvas'),ctx=cv.getContext('2d');
+  const sl=document.getElementById('spectrum-slider');
+  let W,H;
+  const N=10;
+  const PC=[];
+  for(let i=0;i<N*N;i++)PC.push(`hsl(${(i*37+i*i*7)%360},70%,60%)`);
+  function resize(){W=cv.width=cv.offsetWidth;H=cv.height=280;}
+  resize();window.addEventListener('resize',()=>{resize();draw(+sl.value/100);});
+
+  function draw(t){
+    ctx.clearRect(0,0,W,H);
+    const px=W*.07,py=H*.1,gw=W*.52,gh=H*.8,cw=gw/N,ch=gh/N;
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+      ctx.beginPath();ctx.arc(px+c*cw+cw/2,py+r*ch+ch/2,Math.min(cw,ch)*.27,0,Math.PI*2);
+      ctx.fillStyle=PC[r*N+c];ctx.globalAlpha=1;ctx.fill();
+    }
+    if(t>.02){
+      ctx.globalAlpha=t;
+      const sx=px+gw+W*.04,sw=W-sx-W*.03;
+      ctx.fillStyle='#0a0a0a';ctx.fillRect(sx,py,sw,gh);
+      for(let r=0;r<N;r++){
+        const by=py+r*ch+ch*.15,bh=ch*.7,hue=(r*37*N)%360;
+        const g=ctx.createLinearGradient(sx,0,sx+sw,0);
+        g.addColorStop(0,`hsl(0,70%,30%)`);g.addColorStop(.2,`hsl(30,80%,50%)`);
+        g.addColorStop(.4,`hsl(${hue},80%,55%)`);g.addColorStop(.7,`hsl(${(hue+120)%360},65%,45%)`);
+        g.addColorStop(1,`hsl(270,60%,30%)`);
+        ctx.fillStyle=g;ctx.fillRect(sx+2,by,sw-4,bh);
+        ctx.strokeStyle=PC[r*N];ctx.lineWidth=.5;ctx.setLineDash([3,5]);
+        ctx.beginPath();ctx.moveTo(px+(N-1)*cw+cw/2+Math.min(cw,ch)*.27,py+r*ch+ch/2);ctx.lineTo(sx,by+bh/2);ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.fillStyle='#6e9ec8';ctx.font='10px Courier Prime,monospace';ctx.fillText('Z (스펙트럼)',sx+4,py-6);
+    }
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#c8a96e';ctx.font='11px Courier Prime,monospace';
+    ctx.fillText('X',px+gw+4,py+gh/2);ctx.fillText('Y',px+gw/2,py-6);
+  }
+
+  sl.addEventListener('input',()=>draw(+sl.value/100));
+  draw(0);
+
+  let aT=0,aD=1,aR,paused=false;
+  sl.addEventListener('mousedown',()=>{paused=true;cancelAnimationFrame(aR);});
+  function auto(){
+    if(!paused){aT+=.007*aD;if(aT>=1){aT=1;aD=-1;}if(aT<=0){aT=0;aD=1;}sl.value=Math.round(aT*100);draw(aT);}
+    aR=requestAnimationFrame(auto);
+  }
+  setTimeout(()=>{aR=requestAnimationFrame(auto);},3000);
+})();
+
+/* ── TESSERACT ── */
+(function(){
+  const cv=document.getElementById('tesseract-canvas'),ctx=cv.getContext('2d');
+  let W,H,running=true,speed=.8;
+  let aXY=0,aXZ=0,aXW=.3,aYZ=.1,aYW=0,aZW=0;
+  function resize(){W=cv.width=cv.offsetWidth;H=cv.height=380;}
+  resize();window.addEventListener('resize',resize);
+
+  const v4=[];
+  for(let i=0;i<16;i++)v4.push([(i&1)?1:-1,(i&2)?1:-1,(i&4)?1:-1,(i&8)?1:-1]);
+  const edges=[];
+  for(let i=0;i<16;i++)for(let j=i+1;j<16;j++){const d=i^j;if(d&&!(d&(d-1)))edges.push([i,j]);}
+
+  function rot(v,a,b,ang){const r=[...v],c=Math.cos(ang),s=Math.sin(ang);r[a]=v[a]*c-v[b]*s;r[b]=v[a]*s+v[b]*c;return r;}
+  function proj(v){const w=2/(2-v[3]),x=v[0]*w,y=v[1]*w,z=v[2]*w;return[(x-z)*.866,(x+z)*.5-y,w];}
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const sc=Math.min(W,H)*.2,cx=W/2,cy=H/2;
+    const pts=v4.map(v=>{let r=[...v];r=rot(r,0,1,aXY);r=rot(r,0,2,aXZ);r=rot(r,0,3,aXW);r=rot(r,1,2,aYZ);r=rot(r,1,3,aYW);r=rot(r,2,3,aZW);return proj(r);});
+    edges.forEach(([a,b])=>{
+      const isW=((a^b)&8)>0;
+      ctx.strokeStyle=isW?'#c86e9e':'#6e9ec8';ctx.lineWidth=isW?.8:1.2;
+      ctx.globalAlpha=Math.max(.08,(pts[a][2]+pts[b][2])/2*.5);
+      ctx.beginPath();ctx.moveTo(cx+pts[a][0]*sc,cy+pts[a][1]*sc);ctx.lineTo(cx+pts[b][0]*sc,cy+pts[b][1]*sc);ctx.stroke();
+    });
+    pts.forEach(([x,y])=>{ctx.globalAlpha=.7;ctx.fillStyle='#c8a96e';ctx.beginPath();ctx.arc(cx+x*sc,cy+y*sc,2.5,0,Math.PI*2);ctx.fill();});
+    ctx.globalAlpha=1;
+  }
+
+  function loop(){
+    if(running){aXY+=.004*speed;aXZ+=.003*speed;aXW+=.005*speed;aYZ+=.002*speed;aYW+=.004*speed;aZW+=.003*speed;}
+    draw();requestAnimationFrame(loop);
+  }
+  loop();
+
+  window.toggleTesseract=function(){running=!running;document.getElementById('tess-play-btn').textContent=running?'⏸ 일시정지':'▶ 재생';};
+  window.setTessSpeed=function(s){speed=s;};
+})();
+</script>
+</body>
+</html>
